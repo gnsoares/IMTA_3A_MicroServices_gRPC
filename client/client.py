@@ -2,6 +2,8 @@ import grpc
 
 import movie_pb2
 import movie_pb2_grpc
+import showtime_pb2
+import showtime_pb2_grpc
 
 
 def get_list_movies(stub):
@@ -38,6 +40,18 @@ def remove_movie(stub, id):
     print(result.movie)
 
 
+#-------Showtime ---------------
+def get_list_times(stub):
+    alltimes = stub.GetListTimes(showtime_pb2.EmptyDate())
+    for time in alltimes:
+        print("Times %s" % (time))
+
+
+def get_times_by_date(stub, date):
+    times = stub.GetTimesByDate(date)
+    print(times)
+
+
 def run():
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
     # used in circumstances in which the with statement does not fit the needs
@@ -68,6 +82,14 @@ def run():
         print("-------------- RemoveMovie --------------")
         movieid = movie_pb2.MovieID(id="a8034f44-aee4-44cf-b32c-74cf452ae")
         remove_movie(stub, movieid)
+
+    with grpc.insecure_channel('localhost:3002') as channel:
+        stub = showtime_pb2_grpc.ShowtimeStub(channel)
+        print("-------------- GetListTimes --------------")
+        get_list_times(stub)
+        print("-------------- GetMovieByID --------------")
+        date = showtime_pb2.Date(date="20151203")
+        get_times_by_date(stub, date)
 
     channel.close()
 
