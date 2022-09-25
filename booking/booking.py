@@ -1,21 +1,40 @@
-from flask import Flask, render_template, request, jsonify, make_response
-import requests
+import grpc
+from concurrent import futures
+import booking_pb2
+import booking_pb2_grpc
 import json
-from werkzeug.exceptions import NotFound
 
-app = Flask(__name__)
-
-PORT = 3003
-HOST = '0.0.0.0'
-
-with open('{}/databases/bookings.json'.format("."), "r") as jsf:
-   bookings = json.load(jsf)["bookings"]
-
-@app.route("/", methods=['GET'])
-def home():
-   return "<h1 style='color:blue'>Welcome to the Booking service!</h1>"
+EMPTY_BOOKING_DATA = booking_pb2.BookingData(userId="",
+                                             dates="")
 
 
-if __name__ == "__main__":
-   print("Server running in port %s"%(PORT))
-   app.run(host=HOST, port=PORT)
+class BookingServicer(booking_pb2_grpc.BookingServicer):
+
+    def __init__(self):
+        with open('{}/data/bookings.json'.format("."), "r") as jsf:
+            self.db = json.load(jsf)["bookings"]
+
+    def GetListBookings(self, request, context):
+        for booking in self.db:
+            yield booking_pb2.BookingData(userId=booking['userid'],
+                                          dates=booking['dates'])
+
+    def GetBookingByUserId(self, request, context):
+        for booking in self.db:
+            if booking['userid'] == request.userId:
+                print("Booking found!")
+                return booking_pb2.BookingData(userId=booking['userid'],
+                                               dates=booking['dates'])
+        return EMPTY_BOOKING_DATA
+
+
+def serve():
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    booking_pb2_grpc.add_BookingServicer_to_server(BookingServicer(), server)
+    server.add_insecure_port('[::]:3003')
+    server.start()
+    server.wait_for_termination()
+
+
+if __name__ == '__main__':
+    serve()

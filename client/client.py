@@ -4,6 +4,8 @@ import movie_pb2
 import movie_pb2_grpc
 import showtime_pb2
 import showtime_pb2_grpc
+import booking_pb2
+import booking_pb2_grpc
 
 
 def get_list_movies(stub):
@@ -51,6 +53,17 @@ def get_times_by_date(stub, date):
     times = stub.GetTimesByDate(date)
     print(times)
 
+#-------Booking ---------------
+def get_list_bookings(stub):
+    allBookings = stub.GetListBookings(booking_pb2.EmptyBooking())
+    for booking in allBookings:
+        print("Bookings %s" % (booking))
+
+
+def get_booking_by_userId(stub, userId):
+    bookings = stub.GetBookingByUserId(userId)
+    print(bookings)
+
 
 def run():
     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
@@ -90,6 +103,14 @@ def run():
         print("-------------- GetMovieByID --------------")
         date = showtime_pb2.Date(date="20151203")
         get_times_by_date(stub, date)
+
+    with grpc.insecure_channel('localhost:3003') as channel:
+        stub = booking_pb2_grpc.BookingStub(channel)
+        print("-------------- GetListBookings --------------")
+        get_list_bookings(stub)
+        print("-------------- GetBookingByUserId --------------")
+        userId = booking_pb2.UserId(userId="garret_heaton")
+        get_booking_by_userId(stub, userId)
 
     channel.close()
 
