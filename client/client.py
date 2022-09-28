@@ -8,6 +8,7 @@ import booking_pb2
 import booking_pb2_grpc
 
 
+#------- Movies ---------------
 def get_list_movies(stub):
     allmovies = stub.GetListMovies(movie_pb2.Empty())
     for movie in allmovies:
@@ -49,11 +50,13 @@ def get_list_times(stub):
         print("Times %s" % (time))
 
 
-def get_times_by_date(stub, date):
-    times = stub.GetTimesByDate(date)
-    print(times)
+def get_movies_by_date(stub, date):
+    movies = stub.GetMoviesByDate(date)
+    for movie in movies:
+        print(movie.movieid)
 
-#-------Booking ---------------
+
+#------- Booking ---------------
 def get_list_bookings(stub):
     allBookings = stub.GetListBookings(booking_pb2.EmptyBooking())
     for booking in allBookings:
@@ -61,8 +64,13 @@ def get_list_bookings(stub):
 
 
 def get_booking_by_userId(stub, userId):
-    bookings = stub.GetBookingByUserId(userId)
-    print(bookings)
+    booking = stub.GetBookingByUserId(userId)
+    print(booking)
+
+
+def add_booking_by_userId(stub, booking):
+    booking = stub.AddBookingByUserId(booking)
+    print(booking)
 
 
 def run():
@@ -100,17 +108,35 @@ def run():
         stub = showtime_pb2_grpc.ShowtimeStub(channel)
         print("-------------- GetListTimes --------------")
         get_list_times(stub)
-        print("-------------- GetMovieByID --------------")
+        print("-------------- GetMoviesByDate --------------")
         date = showtime_pb2.Date(date="20151203")
-        get_times_by_date(stub, date)
+        get_movies_by_date(stub, date)
 
     with grpc.insecure_channel('localhost:3003') as channel:
         stub = booking_pb2_grpc.BookingStub(channel)
         print("-------------- GetListBookings --------------")
         get_list_bookings(stub)
         print("-------------- GetBookingByUserId --------------")
-        userId = booking_pb2.UserId(userId="garret_heaton")
+        userId = booking_pb2.UserId(userid="garret_heaton")
         get_booking_by_userId(stub, userId)
+        print("------------- AddBookingByUserId (Existing user) -------------")
+        booking = booking_pb2.OneBooking(
+            userid="dwight_schrute",
+            date="20151201",
+            movieid="a8034f44-aee4-44cf-b32c-74cf452aaaae")
+        add_booking_by_userId(stub, booking)
+        print("---------- AddBookingByUserId (Movie not available) ----------")
+        booking = booking_pb2.OneBooking(
+            userid="michael_scott",
+            date="20151207",
+            movieid="a8034f44-aee4-44cf-b32c-74cf452aaaae")
+        add_booking_by_userId(stub, booking)
+        print("-------------- AddBookingByUserId (New user) --------------")
+        booking = booking_pb2.OneBooking(
+            userid="michael_scott",
+            date="20151201",
+            movieid="a8034f44-aee4-44cf-b32c-74cf452aaaae")
+        add_booking_by_userId(stub, booking)
 
     channel.close()
 
