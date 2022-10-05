@@ -1,6 +1,7 @@
 
 .PHONY: all movie booking showtime
-BASE_DIR=$(IMT)/Services/UE-AD-A1-GRPC
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+BASE_DIR := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 MOVIE=$(BASE_DIR)/movie
 SHOWTIME=$(BASE_DIR)/showtime
 BOOKING=$(BASE_DIR)/booking
