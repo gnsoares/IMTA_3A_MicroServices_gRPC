@@ -29,6 +29,12 @@ class MovieServicer(movie_pb2_grpc.MovieServicer):
                                            id=movie['id'])
         return EMPTY_MOVIE_DATA
 
+    def GetMoviesFiltered(self, request, context):
+        rating = request.rating
+        for movie in self.db:
+            if float(movie['rating']) >= rating:
+                yield movie_pb2.MovieData(**movie)
+
     def GetListMovies(self, request, context):
         for movie in self.db:
             yield movie_pb2.MovieData(title=movie['title'],

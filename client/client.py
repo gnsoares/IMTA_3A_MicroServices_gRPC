@@ -20,6 +20,12 @@ def get_movie_by_id(stub, id):
     print(movie)
 
 
+def get_movies_filtered(stub, rating):
+    movies = stub.GetMoviesFiltered(rating)
+    for movie in movies:
+        print("Movie called %s" % (movie.title))
+
+
 def get_movie_by_title(stub, title):
     movie = stub.GetMovieByTitle(title)
     print(movie)
@@ -84,9 +90,9 @@ def run():
         print("-------------- GetMovieByID --------------")
         movieid = movie_pb2.MovieID(id="a8034f44-aee4-44cf-b32c-74cf452aaaae")
         get_movie_by_id(stub, movieid)
-        print("-------------- GetMovieByTitle --------------")
-        title = movie_pb2.Title(title="The Martian")
-        get_movie_by_title(stub, title)
+        print("-------------- GetMoviesFiltered --------------")
+        rating = movie_pb2.RatingFilter(rating=7.4)
+        get_movies_filtered(stub, rating)
         print("-------------- CreateMovie --------------")
         movie = movie_pb2.MovieData(id="a8034f44-aee4-44cf-b32c-74cf452ae",
                                     title="Knives Out",
