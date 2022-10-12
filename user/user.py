@@ -13,8 +13,8 @@ import booking_pb2_grpc
 
 app = Flask(__name__)
 
-BOOKING = 'localhost:3003'
-MOVIE = 'localhost:3001'
+BOOKING = 'booking:3003'
+MOVIE = 'movie:3001'
 
 with open('{}/data/users.json'.format("."), "r") as jsf:
     users = json.load(jsf)["users"]
