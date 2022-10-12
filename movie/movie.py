@@ -1,5 +1,3 @@
-from email import message
-import re
 import grpc
 from concurrent import futures
 import movie_pb2
@@ -88,31 +86,29 @@ class MovieServicer(movie_pb2_grpc.MovieServicer):
         print('Request received for UpdateMovieRating')
         print(f'Request message:\n{request}')
 
+        # check if oneOf field is present
         if request.id:
-            for movie in self.db:
-                if str(movie['id']) == str(request.id):
-                    movie['rating'] = float(request.rating)
-                    print('Movie rating updated!')
-                    return movie_pb2.FeedbackMessage(
-                        message='movie rating updated',
-                        movie=movie_pb2.MovieData(**movie))
-            print("Movie NOT found!")
-            return movie_pb2.FeedbackMessage(message='movie not found',
-                                             movie=EMPTY_MOVIE_DATA)
-        if request.title:
-            for movie in self.db:
-                if str(movie['title']) == str(request.title):
-                    movie['rating'] = float(request.rating)
-                    print('Movie rating updated!')
-                    return movie_pb2.FeedbackMessage(
-                        message='movie rating updated',
-                        movie=movie_pb2.MovieData(**movie))
-            print("Movie NOT found!")
-            return movie_pb2.FeedbackMessage(message='movie not found',
-                                             movie=EMPTY_MOVIE_DATA)
-        print("Missing parameters!")
-        return movie_pb2.FeedbackMessage(
-            message='needs at least one of id or title', movie=EMPTY_MOVIE_DATA)
+            field, ref = 'id', request.id
+        elif request.title:
+            field, ref = 'title', request.title
+        else:
+            print("Missing parameters!")
+            return movie_pb2.FeedbackMessage(
+                message='needs at least one of id or title',
+                movie=EMPTY_MOVIE_DATA)
+
+        # find movie and update it
+        for movie in self.db:
+            if str(movie[field]) == str(ref):
+                movie['rating'] = float(request.rating)
+                print('Movie rating updated!')
+                return movie_pb2.FeedbackMessage(
+                    message='movie rating updated',
+                    movie=movie_pb2.MovieData(**movie))
+
+        print("Movie NOT found!")
+        return movie_pb2.FeedbackMessage(message='movie not found',
+                                         movie=EMPTY_MOVIE_DATA)
 
     def RemoveMovie(self, request, context):
         print('Request received for RemoveMovie')

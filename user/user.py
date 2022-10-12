@@ -1,10 +1,9 @@
 from collections import defaultdict
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response
 from google.protobuf.json_format import MessageToJson
 import grpc
 import json
-from werkzeug.exceptions import NotFound
 
 import movie_pb2
 import movie_pb2_grpc
@@ -34,8 +33,7 @@ def get_users():
 def get_user_by_id(userid):
     for user in users:
         if str(user['id']) == str(userid):
-            res = make_response(jsonify(user), 200)
-            return res
+            return make_response(jsonify(user), 200)
     return make_response(jsonify({'error': 'User ID not found'}), 404)
 
 
@@ -62,6 +60,7 @@ def update_user(userid):
     body = request.get_json()
     for user in users:
         if str(user['id']) == str(userid):
+            # update user with only what is received, otherwise keep original
             user['name'] = body.get('name', user['name'])
             user['last_active'] = body.get('last_active', user['last_active'])
             return make_response(jsonify(user), 200)
@@ -73,21 +72,26 @@ def update_user(userid):
 def get_user_bookings_by_id(userid):
     for user in users:
         if str(user['id']) == str(userid):
+            # user found -> keep user var
             break
+    # user not found -> abort
     else:
         return make_response(jsonify({'error': 'User ID not found'}), 404)
 
+    # request booking for user bookings
     with grpc.insecure_channel(BOOKING) as channel:
         stub = booking_pb2_grpc.BookingStub(channel)
         userId = booking_pb2.UserId(userid=userid)
         response = stub.GetBookingByUserId(userId)
         bookings_by_date = response.booking.dates
 
+    # aggregate the dates of each movie
     dates_by_movie = defaultdict(list)
     for booking in bookings_by_date:
         for movieid in booking.movies:
             dates_by_movie[movieid].append(booking.date)
 
+    # get movie info and aggregate with dates
     bookings = []
     with grpc.insecure_channel(MOVIE) as channel:
         stub = movie_pb2_grpc.MovieStub(channel)
