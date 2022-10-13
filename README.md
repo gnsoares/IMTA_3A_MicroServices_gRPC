@@ -1,4 +1,4 @@
-# UE-AD-A1-GRPC
+# UE-AD-A1-GRPC (TP GREEN/BLUE)
 
 The project is composed of 4 services each one with its own folder. The services are:
 * `movie`
